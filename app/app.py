@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import joblib
 import numpy as np
 import pandas as pd
@@ -13,13 +13,7 @@ scaler = joblib.load('models/scaler.pkl')
 
 @app.route('/')
 def home():
-    return jsonify({
-        'message': 'NIDS ML API is running',
-        'endpoints': {
-            '/predict': 'POST - Upload CSV for prediction',
-            '/health': 'GET - Check API health'
-        }
-    })
+    return render_template('index.html')
 
 
 @app.route('/health')
@@ -30,18 +24,15 @@ def health():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        # Accept CSV file upload
         if 'file' not in request.files:
             return jsonify({'error': 'No file uploaded'}), 400
 
         file = request.files['file']
         df = pd.read_csv(file)
 
-        # Drop label columns if present
         drop_cols = [c for c in [' Label', 'binary_label'] if c in df.columns]
         df = df.drop(columns=drop_cols)
 
-        # Scale and predict
         scaled = scaler.transform(df)
         predictions = model.predict(scaled)
         probabilities = model.predict_proba(scaled)
@@ -61,10 +52,7 @@ def predict():
             'attack_percentage': round(float(sum(predictions == 1)) / len(predictions) * 100, 2)
         }
 
-        return jsonify({
-            'summary': summary,
-            'results': results
-        })
+        return jsonify({'summary': summary, 'results': results})
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

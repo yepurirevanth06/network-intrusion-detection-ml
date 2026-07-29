@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NIDS - Network Intrusion Detection System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: #1e293b;
+            padding: 20px 40px;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header h1 {
+            font-size: 22px;
+            color: #38bdf8;
+        }
+
+        header p {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .badge {
+            background: #22c55e20;
+            color: #22c55e;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid #22c55e40;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .upload-card {
+            background: #1e293b;
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 50px;
+            text-align: center;
+            transition: border-color 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-card:hover {
+            border-color: #38bdf8;
+        }
+
+        .upload-card h2 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .upload-card p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #7dd3fc;
+        }
+
+        .btn:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin: 30px 0;
+        }
+
+        .summary-card {
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .summary-card .number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .summary-card .label {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .total {
+            color: #38bdf8;
+        }
+
+        .benign {
+            color: #22c55e;
+        }
+
+        .attack {
+            color: #ef4444;
+        }
+
+        .pct {
+            color: #f59e0b;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1e293b;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th {
+            background: #0f172a;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 13px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-top: 1px solid #334155;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .tag-benign {
+            background: #22c55e20;
+            color: #22c55e;
+            border: 1px solid #22c55e40;
+        }
+
+        .tag-attack {
+            background: #ef444420;
+            color: #ef4444;
+            border: 1px solid #ef444440;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #334155;
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        #results {
+            display: none;
+        }
+
+        #filename {
+            color: #38bdf8;
+            font-size: 13px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>🛡️ Network Intrusion Detection System</h1>
+            <p>ML-Powered Network Traffic Analyzer — LightGBM Model</p>
+        </div>
+        <span class="badge">● API Online</span>
+    </header>
+
+    <div class="container">
+        <div class="upload-card" onclick="document.getElementById('fileInput').click()">
+            <h2>Upload Network Traffic CSV</h2>
+            <p>Click to select a CSV file of network traffic flows for analysis</p>
+            <input type="file" id="fileInput" accept=".csv" onchange="handleFile(event)">
+            <button class="btn" onclick="event.stopPropagation()">Choose File</button>
+            <div id="filename"></div>
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p>Analyzing network traffic...</p>
+        </div>
+
+        <div id="results">
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="number total" id="total">0</div>
+                    <div class="label">Total Flows</div>
+                </div>
+                <div class="summary-card">
+                    <div class="number benign" id="benign">0</div>
+                    <div class="label">Benign</div>
+                </div>
+                <div class="summary-card">
+                    <div class="number attack" id="attack">0</div>
+                    <div class="label">Attacks Detected</div>
+                </div>
+                <div class="summary-card">
+                    <div class="number pct" id="pct">0%</div>
+                    <div class="label">Attack Rate</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Row</th>
+                        <th>Classification</th>
+                        <th>Confidence</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+
+        function handleFile(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('filename').textContent = '📄 ' + selectedFile.name;
+                analyzeFile();
+            }
+        }
+
+        async function analyzeFile() {
+            if (!selectedFile) return;
+
+            document.getElementById('loader').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                document.getElementById('total').textContent = data.summary.total_flows;
+                document.getElementById('benign').textContent = data.summary.benign_count;
+                document.getElementById('attack').textContent = data.summary.attack_count;
+                document.getElementById('pct').textContent = data.summary.attack_percentage + '%';
+
+                const tbody = document.getElementById('tableBody');
+                tbody.innerHTML = '';
+                data.results.forEach(r => {
+                    const isAttack = r.prediction === 'Attack';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${r.row}</td>
+                            <td><span class="tag ${isAttack ? 'tag-attack' : 'tag-benign'}">${r.prediction}</span></td>
+                            <td>${r.confidence}%</td>
+                        </tr>`;
+                });
+
+                document.getElementById('loader').style.display = 'none';
+                document.getElementById('results').style.display = 'block';
+            } catch (err) {
+                alert('Error: ' + err.message);
+                document.getElementById('loader').style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>
