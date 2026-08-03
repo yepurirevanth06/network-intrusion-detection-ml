@@ -1,6 +1,7 @@
 # ML-Powered Network Intrusion Detection System (NIDS)
 
 A machine learning system that detects malicious network traffic — including DDoS, port scan, and brute-force attacks — trained on the CICIDS2017 dataset and served through a Flask REST API with an interactive dashboard. Fully containerized with Docker and tested automatically on every push via GitHub Actions CI/CD.
+**🔴 Live Demo:** [network-intrusion-detection-ml.onrender.com](https://network-intrusion-detection-ml.onrender.com) *(free tier — first load after idle takes ~30–60s)*
 
 ![CI/CD Pipeline](https://github.com/yepurirevanth06/network-intrusion-detection-ml/actions/workflows/ci-cd.yml/badge.svg)
 
